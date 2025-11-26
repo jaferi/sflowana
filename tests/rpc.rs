@@ -1,5 +1,6 @@
 use sflowana::config::Config;
 use sflowana::solana::rpc::RpcSource;
+use sflowana::solana::block::Block;
 
 fn rpc_source() -> RpcSource {
     dotenvy::dotenv().ok();
@@ -37,4 +38,24 @@ async fn fetches_block() {
         .expect("failed to fetch block");
 
     assert!(block.blockhash.is_ascii());
+}
+
+#[tokio::test]
+async fn extracts_transactions() {
+    let rpc = rpc_source();
+
+    let slot = rpc
+        .latest_slot()
+        .await
+        .expect("failed to fetch latest slot");
+
+    let block = rpc
+        .get_block(slot)
+        .await
+        .expect("failed to fetch block");
+    
+    let block: Block = Block::from_ui_confirmed_block(slot, &block);
+
+    assert!(!block.transactions.is_empty());
+    assert!(!block.transactions[0].signature.is_empty());
 }
