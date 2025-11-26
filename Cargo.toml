@@ -7,3 +7,4 @@ description = "High-performance real-time Solana transaction and market-data eng
 repository = "https://github.com/jaferi/sflowana"
 
 [dependencies]
+dotenvy = "0.15.7"
