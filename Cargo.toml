@@ -2,7 +2,7 @@
 name = "sflowana"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "Apache-2.0"
 description = "High-performance real-time Solana transaction and market-data engine"
 repository = "https://github.com/jaferi/sflowana"
 
