@@ -2,7 +2,7 @@ use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcBlockConfig, TransactionDetails, UiTransactionEncoding},
     client_error::ClientError,
-    rpc_response::{EncodedTransaction, UiConfirmedBlock},
+    rpc_response::UiConfirmedBlock,
 };
 
 pub struct RpcSource {
