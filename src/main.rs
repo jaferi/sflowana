@@ -20,4 +20,11 @@ async fn main() {
         .expect("failed to fetch latest slot");
 
     println!("latest slot: {slot}");
+
+    let block = rpc
+        .get_block(slot - 1)
+        .await
+        .expect("failed to fetch block");
+
+    println!("block transactions: {:?}", block.transactions.expect("failed to get transactions").len());
 }

@@ -8,5 +8,5 @@ repository = "https://github.com/jaferi/sflowana"
 
 [dependencies]
 dotenvy = "0.15.7"
-solana-client = "4.2.2"
+solana-client = "4.3.0"
 tokio = { version = "1.53.2", features = ["macros", "rt-multi-thread"] }
