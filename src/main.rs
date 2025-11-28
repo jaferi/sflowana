@@ -7,8 +7,7 @@ async fn main() {
 
     dotenvy::dotenv().ok();
 
-    let config = Config::from_env()
-        .expect("failed to load configuration");
+    let config = Config::from_env().expect("failed to load configuration");
 
     println!("RPC: {}", config.rpc_url);
 
@@ -26,5 +25,11 @@ async fn main() {
         .await
         .expect("failed to fetch block");
 
-    println!("block transactions: {:?}", block.transactions.expect("failed to get transactions").len());
+    println!(
+        "block transactions: {:?}",
+        block
+            .transactions
+            .expect("failed to get transactions")
+            .len()
+    );
 }

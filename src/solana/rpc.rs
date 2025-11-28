@@ -1,7 +1,7 @@
 use solana_client::{
+    client_error::ClientError,
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcBlockConfig, TransactionDetails, UiTransactionEncoding},
-    client_error::ClientError,
     rpc_response::UiConfirmedBlock,
 };
 
@@ -16,19 +16,11 @@ impl RpcSource {
         }
     }
 
-    pub async fn latest_slot(
-        &self,
-    ) -> Result<u64, ClientError> {
+    pub async fn latest_slot(&self) -> Result<u64, ClientError> {
         self.client.get_slot().await
     }
 
-    pub async fn get_block(
-        &self,
-        slot: u64,
-    ) -> Result<
-        UiConfirmedBlock,
-        ClientError,
-    > {
+    pub async fn get_block(&self, slot: u64) -> Result<UiConfirmedBlock, ClientError> {
         self.client
             .get_block_with_config(
                 slot,
