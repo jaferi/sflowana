@@ -62,7 +62,7 @@ impl Block {
                                             .instructions
                                             .iter()
                                             .map(|ix| {
-                                                let program_id = message.account_keys
+                                                let program_id = resolved_accounts
                                                     [ix.program_id_index as usize]
                                                     .clone();
 
@@ -106,5 +106,47 @@ impl Block {
             parent_slot: block.parent_slot,
             transactions,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_creates_block_with_expected_fields() {
+        let block = Block::new(
+            100,
+            "blockhash".to_owned(),
+            99,
+            vec![],
+        );
+
+        assert_eq!(block.slot, 100);
+        assert_eq!(block.blockhash, "blockhash");
+        assert_eq!(block.parent_slot, 99);
+        assert!(block.transactions.is_empty());
+    }
+
+    #[test]
+    fn converts_block_without_transactions() {
+        let ui_block = UiConfirmedBlock {
+            previous_blockhash: "previous".to_owned(),
+            blockhash: "current".to_owned(),
+            parent_slot: 99,
+            transactions: None,
+            signatures: None,
+            rewards: None,
+            num_reward_partitions: None,
+            block_time: None,
+            block_height: None,
+        };
+
+        let block = Block::from_ui_confirmed_block(100, &ui_block);
+
+        assert_eq!(block.slot, 100);
+        assert_eq!(block.blockhash, "current");
+        assert_eq!(block.parent_slot, 99);
+        assert!(block.transactions.is_empty());
     }
 }
