@@ -2937,6 +2937,7 @@ version = "0.1.0"
 dependencies = [
  "bs58",
  "dotenvy",
+ "serde_json",
  "solana-client",
  "solana-sdk",
  "solana-transaction-status-client-types",

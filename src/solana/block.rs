@@ -112,6 +112,7 @@ impl Block {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn new_creates_block_with_expected_fields() {
@@ -147,6 +148,50 @@ mod tests {
         assert_eq!(block.slot, 100);
         assert_eq!(block.blockhash, "current");
         assert_eq!(block.parent_slot, 99);
+        assert!(block.transactions.is_empty());
+    }
+
+    fn ui_block(transactions: serde_json::Value) -> UiConfirmedBlock {
+        serde_json::from_value(json!({
+            "previousBlockhash": "previous",
+            "blockhash": "current",
+            "parentSlot": 99,
+            "transactions": transactions,
+            "signatures": null,
+            "rewards": null,
+            "numRewardPartitions": null,
+            "blockTime": null,
+            "blockHeight": null
+        }))
+        .expect("valid UiConfirmedBlock fixture")
+    }
+
+    #[test]
+    fn preserves_block_metadata() {
+        let source = ui_block(json!(null));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
+        assert_eq!(block.slot, 100);
+        assert_eq!(block.blockhash, "current");
+        assert_eq!(block.parent_slot, 99);
+    }
+
+    #[test]
+    fn returns_empty_transactions_when_transactions_are_missing() {
+        let source = ui_block(json!(null));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
+        assert!(block.transactions.is_empty());
+    }
+
+    #[test]
+    fn returns_empty_transactions_for_empty_transaction_list() {
+        let source = ui_block(json!([]));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
         assert!(block.transactions.is_empty());
     }
 }
