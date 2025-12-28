@@ -116,12 +116,7 @@ mod tests {
 
     #[test]
     fn new_creates_block_with_expected_fields() {
-        let block = Block::new(
-            100,
-            "blockhash".to_owned(),
-            99,
-            vec![],
-        );
+        let block = Block::new(100, "blockhash".to_owned(), 99, vec![]);
 
         assert_eq!(block.slot, 100);
         assert_eq!(block.blockhash, "blockhash");

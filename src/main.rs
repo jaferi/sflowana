@@ -1,4 +1,5 @@
 use sflowana::config::Config;
+use sflowana::solana::ingestor::{Ingestor, StartPosition};
 use sflowana::solana::rpc::RpcSource;
 
 #[tokio::main]
@@ -32,4 +33,10 @@ async fn main() {
             .expect("failed to get transactions")
             .len()
     );
+
+    let ingestor = Ingestor::new(rpc);
+    ingestor
+        .ingest(StartPosition::BeforeLatest)
+        .await
+        .expect("failed to ingest");
 }

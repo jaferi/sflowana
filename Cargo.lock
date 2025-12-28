@@ -2935,6 +2935,7 @@ dependencies = [
 name = "sflowana"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bs58",
  "dotenvy",
  "serde_json",
