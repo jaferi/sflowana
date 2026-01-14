@@ -34,4 +34,12 @@ impl RpcSource {
             )
             .await
     }
+
+    pub async fn get_finalized_blocks(
+        &self,
+        start_slot: u64,
+        end_slot: u64,
+    ) -> Result<Vec<u64>, ClientError> {
+        self.client.get_blocks(start_slot, Some(end_slot)).await
+    }
 }

@@ -36,7 +36,7 @@ async fn main() {
 
     let ingestor = Ingestor::new(rpc);
     ingestor
-        .ingest(StartPosition::BeforeLatest)
+        .ingest(StartPosition::Slot(slot - 100))
         .await
         .expect("failed to ingest");
 }

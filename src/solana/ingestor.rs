@@ -30,52 +30,82 @@ impl Ingestor {
         }
     }
 
-    pub async fn ingest(&self, start_position: StartPosition) -> Result<(), IngestorError> {
-        let mut current_slot = match start_position {
-            StartPosition::Latest => self.rpc_source.latest_slot().await?,
+    async fn resolve_start_position(
+        &self,
+        start_position: StartPosition,
+    ) -> Result<u64, IngestorError> {
+        match start_position {
+            StartPosition::Latest => Ok(self.rpc_source.latest_slot().await?),
 
-            StartPosition::BeforeLatest => self.rpc_source.latest_slot().await?.saturating_sub(1),
+            StartPosition::BeforeLatest => {
+                Ok(self.rpc_source.latest_slot().await?.saturating_sub(1))
+            }
 
-            StartPosition::Slot(slot) => slot,
+            StartPosition::Slot(slot) => Ok(slot),
 
             StartPosition::Resume => self
                 .checkpoint_store
                 .load()
                 .await?
-                .ok_or(IngestorError::NoCheckpoint)?
-                .checked_add(1)
-                .ok_or(IngestorError::SlotOverflow)?,
-        };
+                .ok_or(IngestorError::NoCheckpoint)
+                .and_then(|slot| slot.checked_add(1).ok_or(IngestorError::SlotOverflow)),
+        }
+    }
+
+    pub async fn ingest(&self, start_position: StartPosition) -> Result<(), IngestorError> {
+        let mut current_slot = self.resolve_start_position(start_position).await?;
 
         loop {
-            let block = self.rpc_source.get_block(current_slot).await?;
+            let latest_slot = self.rpc_source.latest_slot().await?;
 
-            println!(
-                "Fetched block for slot {} with {} transactions",
-                current_slot,
-                block
-                    .transactions
-                    .as_ref()
-                    .map(|txs| txs.len())
-                    .unwrap_or(0)
-            );
+            if current_slot > latest_slot {
+                // let's wait
+                continue;
+            }
 
-            // Process the block
-            let block: Block = Block::from_ui_confirmed_block(current_slot, &block);
+            let end_slot = current_slot.saturating_add(1_000).min(latest_slot);
 
-            println!(
-                "Ingesting slot {} with {} transactions",
-                block.slot,
-                block.transactions.len()
-            );
+            let finalized_blocks = self
+                .rpc_source
+                .get_finalized_blocks(current_slot, end_slot)
+                .await?;
 
-            self.processor.process(&block).await?;
+            if finalized_blocks.is_empty() {
+                // No finalized blocks in the range, let's wait
+                continue;
+            }
 
-            // Save the checkpoint
-            self.checkpoint_store.save(current_slot).await?;
+            for slot_id in finalized_blocks {
+                let block = self.rpc_source.get_block(slot_id).await?;
 
-            // Move to the next slot
-            current_slot += 1;
+                println!(
+                    "Fetched block for slot {} with {} transactions",
+                    slot_id,
+                    block
+                        .transactions
+                        .as_ref()
+                        .map(|txs| txs.len())
+                        .unwrap_or(0)
+                );
+
+                // Process the block
+                let block: Block = Block::from_ui_confirmed_block(slot_id, &block);
+
+                println!(
+                    "Ingesting slot {} with {} transactions",
+                    block.slot,
+                    block.transactions.len()
+                );
+
+                self.processor.process(&block).await?;
+
+                // Save the checkpoint
+                self.checkpoint_store.save(slot_id).await?;
+            }
+
+            current_slot = end_slot
+                .checked_add(1)
+                .ok_or(IngestorError::SlotOverflow)?;
         }
     }
 }
