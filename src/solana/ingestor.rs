@@ -100,7 +100,7 @@ impl Ingestor {
                 self.processor.process(&block).await?;
 
                 // Save the checkpoint
-                self.checkpoint_store.save(slot_id).await?;
+                self.checkpoint_store.save(slot_id + 1).await?;
             }
 
             current_slot = end_slot

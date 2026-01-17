@@ -5,7 +5,7 @@ use std::sync::Mutex;
 pub trait Checkpoint: Send + Sync {
     async fn load(&self) -> Result<Option<u64>, CheckpointError>;
 
-    async fn save(&self, slot: u64) -> Result<(), CheckpointError>;
+    async fn save(&self, next_slot: u64) -> Result<(), CheckpointError>;
 }
 
 #[derive(Debug)]
@@ -43,13 +43,13 @@ impl Checkpoint for MemoryCheckpoint {
         Ok(*slot)
     }
 
-    async fn save(&self, slot: u64) -> Result<(), CheckpointError> {
+    async fn save(&self, next_slot: u64) -> Result<(), CheckpointError> {
         let mut checkpoint = self
             .slot
             .lock()
             .map_err(|_| CheckpointError::Other("checkpoint mutex poisoned".into()))?;
 
-        *checkpoint = Some(slot);
+        *checkpoint = Some(next_slot);
         Ok(())
     }
 }
