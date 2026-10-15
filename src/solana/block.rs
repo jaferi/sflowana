@@ -189,4 +189,116 @@ mod tests {
 
         assert!(block.transactions.is_empty());
     }
+
+    #[test]
+    fn extracts_transaction_metadata_and_instructions() {
+        let source = ui_block(json!([
+            {
+                "transaction": {
+                    "signatures": ["signature1"],
+                    "message": {
+                        "header": {
+                            "numRequiredSignatures": 1,
+                            "numReadonlySignedAccounts": 0,
+                            "numReadonlyUnsignedAccounts": 0
+                        },
+                        "accountKeys": [
+                            "program1",
+                            "account1",
+                            "account2"
+                        ],
+                        "recentBlockhash": "blockhash",
+                        "instructions": [
+                            {
+                                "programIdIndex": 0,
+                                "accounts": [1, 2],
+                                "data": "Ldp",
+                                "stackHeight": null
+                            }
+                        ]
+                    }
+                },
+                "meta": null,
+                "version": "legacy"
+            }
+        ]));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
+        assert_eq!(block.transactions.len(), 1);
+
+        let transaction = &block.transactions[0];
+        assert_eq!(transaction.signature, "signature1");
+        assert_eq!(transaction.index, 0);
+        assert_eq!(transaction.instructions.len(), 1);
+
+        let instruction = &transaction.instructions[0];
+        assert_eq!(instruction.program_id, "program1");
+        assert_eq!(
+            instruction.accounts,
+            vec!["account1".to_owned(), "account2".to_owned()]
+        );
+        assert_eq!(instruction.data, bs58::decode("Ldp").into_vec().unwrap());
+    }
+
+    #[test]
+    fn preserves_transaction_index_when_unsupported_encoding_is_skipped() {
+        let source = ui_block(json!([
+            {
+                "transaction": "not-json-encoded",
+                "meta": null,
+                "version": "legacy"
+            },
+            {
+                "transaction": {
+                    "signatures": ["signature2"],
+                    "message": {
+                        "header": {
+                            "numRequiredSignatures": 1,
+                            "numReadonlySignedAccounts": 0,
+                            "numReadonlyUnsignedAccounts": 0
+                        },
+                        "accountKeys": ["program1"],
+                        "recentBlockhash": "blockhash",
+                        "instructions": []
+                    }
+                },
+                "meta": null,
+                "version": "legacy"
+            }
+        ]));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
+        assert_eq!(block.transactions.len(), 1);
+        assert_eq!(block.transactions[0].signature, "signature2");
+        assert_eq!(block.transactions[0].index, 1);
+    }
+
+    #[test]
+    fn skips_json_transaction_without_signature() {
+        let source = ui_block(json!([
+            {
+                "transaction": {
+                    "signatures": [],
+                    "message": {
+                        "header": {
+                            "numRequiredSignatures": 1,
+                            "numReadonlySignedAccounts": 0,
+                            "numReadonlyUnsignedAccounts": 0
+                        },
+                        "accountKeys": ["program1"],
+                        "recentBlockhash": "blockhash",
+                        "instructions": []
+                    }
+                },
+                "meta": null,
+                "version": "legacy"
+            }
+        ]));
+
+        let block = Block::from_ui_confirmed_block(100, &source);
+
+        assert!(block.transactions.is_empty());
+    }
 }
