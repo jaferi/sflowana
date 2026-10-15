@@ -53,3 +53,41 @@ impl Checkpoint for MemoryCheckpoint {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn new_checkpoint_has_no_saved_slot() {
+        let checkpoint = MemoryCheckpoint::new();
+
+        assert_eq!(checkpoint.load().await.unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn save_stores_next_slot() {
+        let checkpoint = MemoryCheckpoint::new();
+
+        checkpoint.save(100).await.unwrap();
+
+        assert_eq!(checkpoint.load().await.unwrap(), Some(100));
+    }
+
+    #[tokio::test]
+    async fn save_overwrites_previous_slot() {
+        let checkpoint = MemoryCheckpoint::new();
+
+        checkpoint.save(100).await.unwrap();
+        checkpoint.save(200).await.unwrap();
+
+        assert_eq!(checkpoint.load().await.unwrap(), Some(200));
+    }
+
+    #[tokio::test]
+    async fn default_checkpoint_has_no_saved_slot() {
+        let checkpoint = MemoryCheckpoint::default();
+
+        assert_eq!(checkpoint.load().await.unwrap(), None);
+    }
+}
