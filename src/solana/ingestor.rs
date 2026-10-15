@@ -72,9 +72,7 @@ impl Ingestor {
 
             if finalized_blocks.is_empty() {
                 // No finalized blocks in the range, let's wait
-                current_slot = end_slot
-                    .checked_add(1)
-                    .ok_or(IngestorError::SlotOverflow)?;
+                current_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
                 continue;
             }
 
