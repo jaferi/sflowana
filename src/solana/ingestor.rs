@@ -101,7 +101,11 @@ impl Ingestor {
                 self.processor.process(&block).await?;
 
                 // Save the checkpoint
-                self.checkpoint_store.save(slot_id + 1).await?;
+                let next_slot = slot_id
+                    .checked_add(1)
+                    .ok_or(IngestorError::SlotOverflow)?;
+
+                self.checkpoint_store.save(next_slot).await?;
             }
 
             current_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
