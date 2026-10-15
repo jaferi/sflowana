@@ -47,8 +47,7 @@ impl Ingestor {
                 .checkpoint_store
                 .load()
                 .await?
-                .ok_or(IngestorError::NoCheckpoint)
-                .and_then(|slot| slot.checked_add(1).ok_or(IngestorError::SlotOverflow)),
+                .ok_or(IngestorError::NoCheckpoint),
         }
     }
 
@@ -60,6 +59,7 @@ impl Ingestor {
 
             if current_slot > latest_slot {
                 // let's wait
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                 continue;
             }
 
@@ -72,6 +72,9 @@ impl Ingestor {
 
             if finalized_blocks.is_empty() {
                 // No finalized blocks in the range, let's wait
+                current_slot = end_slot
+                    .checked_add(1)
+                    .ok_or(IngestorError::SlotOverflow)?;
                 continue;
             }
 
