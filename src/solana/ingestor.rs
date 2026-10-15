@@ -1,7 +1,7 @@
 use solana_client::client_error::ClientError;
 
 use crate::solana::block::Block;
-use crate::solana::checkpoint::{Checkpoint, CheckpointError, MemoryCheckpoint};
+use crate::solana::checkpoint::{Checkpoint, CheckpointError, FileCheckpoint};
 use crate::solana::processor::{ProcessError, Processor};
 use crate::solana::rpc::RpcSource;
 
@@ -20,7 +20,7 @@ pub struct Ingestor {
 
 impl Ingestor {
     pub fn new(rpc_source: RpcSource) -> Self {
-        let checkpoint_store = Box::new(MemoryCheckpoint::new());
+        let checkpoint_store = Box::new(FileCheckpoint::new("data/checkpoint.txt"));
         let processor = Processor::new();
 
         Self {
@@ -72,7 +72,7 @@ impl Ingestor {
 
             if finalized_blocks.is_empty() {
                 let next_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
-                
+
                 self.checkpoint_store.save(next_slot).await?;
                 current_slot = next_slot;
 
@@ -106,9 +106,7 @@ impl Ingestor {
                 self.processor.process(&block).await?;
 
                 // Save the checkpoint
-                let next_slot = slot_id
-                    .checked_add(1)
-                    .ok_or(IngestorError::SlotOverflow)?;
+                let next_slot = slot_id.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
 
                 self.checkpoint_store.save(next_slot).await?;
             }
