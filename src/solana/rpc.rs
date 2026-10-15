@@ -36,7 +36,7 @@ where
                 let jitter = u64::from(attempt) * 100;
                 let noise = u64::from(std::process::id()) % (jitter + 1);
 
-                delay = (delay * 2 + noise).min(MAX_DELAY)
+                delay = (delay * 2).min(MAX_DELAY) + Duration::from_millis(noise);
             }
         }
     }
