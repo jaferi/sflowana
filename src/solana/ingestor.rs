@@ -71,8 +71,13 @@ impl Ingestor {
                 .await?;
 
             if finalized_blocks.is_empty() {
+                let next_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
+                
+                self.checkpoint_store.save(next_slot).await?;
+                current_slot = next_slot;
+
                 // No finalized blocks in the range, let's wait
-                current_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                 continue;
             }
 
