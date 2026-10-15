@@ -103,9 +103,7 @@ impl Ingestor {
                 self.checkpoint_store.save(slot_id + 1).await?;
             }
 
-            current_slot = end_slot
-                .checked_add(1)
-                .ok_or(IngestorError::SlotOverflow)?;
+            current_slot = end_slot.checked_add(1).ok_or(IngestorError::SlotOverflow)?;
         }
     }
 }
